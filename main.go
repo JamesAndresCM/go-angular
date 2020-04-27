@@ -31,7 +31,8 @@ func main() {
 	r.Get("/products", AllProducts)
 	r.Post("/products", CreateProduct)
 	r.Put("/products/{id}", UpdateProduct)
-  r.Delete("/products/{id}",DeleteProduct)
+	r.Delete("/products/{id}", DeleteProduct)
+	r.Get("/products/{id}", ShowProduct)
 	http.ListenAndServe(":3000", r)
 }
 
@@ -42,7 +43,7 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	_, er := query.Exec(id)
 	catch(er)
 	query.Close()
-  respondwithJSON(w, http.StatusOK, map[string]string{"message": "product was deleted"})
+	respondwithJSON(w, http.StatusOK, map[string]string{"message": "product was deleted"})
 }
 
 func UpdateProduct(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +84,15 @@ func AllProducts(w http.ResponseWriter, r *http.Request) {
 		products = append(products, product)
 	}
 	respondwithJSON(w, http.StatusOK, products)
+}
+
+func ShowProduct(w http.ResponseWriter, r *http.Request) {
+	var product Product
+	id := chi.URLParam(r, "id")
+	query := databaseConnection.QueryRow("SELECT id, product_code, COALESCE(description, '') FROM products WHERE id=?", id)
+	error := query.Scan(&product.ID, &product.Product_Code, &product.Description)
+	catch(error)
+	respondwithJSON(w, http.StatusOK, product)
 }
 
 func respondwithJSON(w http.ResponseWriter, code int, payload interface{}) {
